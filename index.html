@@ -10,7 +10,6 @@
 </head>
 <body>
 
-<input type="file" id="file"><br><br>
 <canvas id="canvas"></canvas>
 
 <p id="count">0 / 30</p>
@@ -21,24 +20,21 @@
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-const fileInput = document.getElementById("file");
 const output = document.getElementById("output");
 const countText = document.getElementById("count");
 
 let points = [];
+let colors = [];
 const MAX_POINTS = 30;
 
-fileInput.onchange = e => {
-  const img = new Image();
-  img.src = URL.createObjectURL(e.target.files[0]);
+// 🔥 ここで画像読み込み
+const img = new Image();
+img.src = "images/10a.png";
 
-  img.onload = () => {
-    canvas.width = img.width;
-    canvas.height = img.height;
-    ctx.drawImage(img, 0, 0);
-    points = [];
-    updateUI();
-  };
+img.onload = () => {
+  canvas.width = img.width;
+  canvas.height = img.height;
+  ctx.drawImage(img, 0, 0);
 };
 
 canvas.addEventListener("click", e => {
@@ -48,7 +44,12 @@ canvas.addEventListener("click", e => {
   const x = Math.round(e.clientX - rect.left);
   const y = Math.round(e.clientY - rect.top);
 
+  // RGB取得
+  const pixel = ctx.getImageData(x, y, 1, 1).data;
+  const [r,g,b] = pixel;
+
   points.push([x, y]);
+  colors.push([r, g, b]);
 
   drawPoint(x, y, points.length);
   updateUI();
@@ -78,13 +79,22 @@ function generateOutput(){
   for(const p of points){
     text += `  [${p[0]}, ${p[1]}],\n`;
   }
+  text += "];\n\n";
+
+  text += "const colors = [\n";
+  for(const c of colors){
+    text += `  [${c[0]}, ${c[1]}, ${c[2]}],\n`;
+  }
   text += "];";
+
   output.textContent = text;
 }
 
 function resetPoints(){
   points = [];
+  colors = [];
   ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(img, 0, 0); // ←画像再描画
   output.textContent = "";
   countText.textContent = `0 / ${MAX_POINTS}`;
 }
